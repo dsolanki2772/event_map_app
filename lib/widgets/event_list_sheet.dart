@@ -56,7 +56,7 @@ class EventListSheet extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          DateUtil.formatDateTime(event.time),
+                          Util.formatDateTime(event.time),
                           style: TextStyle(fontSize: 12, color: Colors.white70),
                         ),
                       ],

@@ -1,12 +1,15 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:event_map_app/bloc/event_bloc.dart';
 import 'package:event_map_app/widgets/event_list_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../bloc/event_event.dart';
 import '../bloc/event_state.dart';
+import '../utils/util.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -53,76 +56,88 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: BlocBuilder<EventBloc, EventState>(
-        builder: (context, state) {
-          if (state is EventLoading) {
+      body: FutureBuilder(
+        future: Util.getCustomMarker(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
-          } else if (state is EventLoaded) {
-            return Stack(
-              children: [
-                GoogleMap(
-                  onMapCreated: _onMapCreated,
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(20.5937, 78.9629),
-                    zoom: 4,
-                  ),
-                  markers: state.events.map((event) {
-                    final random = Random();
-                    return Marker(
-                      markerId: MarkerId(event.time),
-                      position: LatLng(
-                        20 + random.nextDouble() * 10,
-                        70 + random.nextDouble() * 10,
-                      ),
-                      infoWindow: InfoWindow(title: event.name),
-                    );
-                  }).toSet(),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 60,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        "Upcoming",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(width: 6),
-                      Switch(
-                        value: showUpcoming,
-                        activeColor: Colors.orange,
-                        onChanged: (value) {
-                          setState(() {
-                            showUpcoming = value;
-                          });
-                          context.read<EventBloc>().add(ToggleFilter(value));
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                DraggableScrollableSheet(
-                  initialChildSize: 0.3,
-                  maxChildSize: 0.7,
-                  minChildSize: 0.2,
-                  builder: (_, controller) => EventListSheet(
-                    events: state.events,
-                    controller: controller,
-                  ),
-                ),
-              ],
-            );
-          } else if (state is EventError) {
-            return Center(child: Text(state.message));
           }
-          return Container();
+          final customIcon = snapshot.data!;
+          return BlocBuilder<EventBloc, EventState>(
+            builder: (context, state) {
+              if (state is EventLoading) {
+                return Center(child: CircularProgressIndicator());
+              } else if (state is EventLoaded) {
+                return Stack(
+                  children: [
+                    GoogleMap(
+                      onMapCreated: _onMapCreated,
+                      initialCameraPosition: CameraPosition(
+                        target: LatLng(20.5937, 78.9629),
+                        zoom: 4,
+                      ),
+                      markers: state.events.map((event) {
+                        final random = Random();
+                        return Marker(
+                          markerId: MarkerId(event.time),
+                          position: LatLng(
+                            20 + random.nextDouble() * 10,
+                            70 + random.nextDouble() * 10,
+                          ),
+                          icon: customIcon,
+                          infoWindow: InfoWindow(title: event.name),
+                        );
+                      }).toSet(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 60,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Upcoming",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Switch(
+                            value: showUpcoming,
+                            activeColor: Colors.orange,
+                            onChanged: (value) {
+                              setState(() {
+                                showUpcoming = value;
+                              });
+                              context.read<EventBloc>().add(
+                                ToggleFilter(value),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    DraggableScrollableSheet(
+                      initialChildSize: 0.3,
+                      maxChildSize: 0.7,
+                      minChildSize: 0.2,
+                      builder: (_, controller) => EventListSheet(
+                        events: state.events,
+                        controller: controller,
+                      ),
+                    ),
+                  ],
+                );
+              } else if (state is EventError) {
+                return Center(child: Text(state.message));
+              }
+              return Container();
+            },
+          );
         },
       ),
     );
