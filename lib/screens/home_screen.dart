@@ -9,6 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../bloc/event_event.dart';
 import '../bloc/event_state.dart';
+import '../models/event_model.dart';
 import '../utils/util.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -78,14 +79,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       markers: state.events.map((event) {
                         final random = Random();
+                        var name = event is ScheduledEvent
+                            ? event.name
+                            : event is CreatedEvent
+                            ? event.name
+                            : 'Unknown';
                         return Marker(
-                          markerId: MarkerId(event.time),
+                          markerId: MarkerId(name),
                           position: LatLng(
                             20 + random.nextDouble() * 10,
                             70 + random.nextDouble() * 10,
                           ),
                           icon: customIcon,
-                          infoWindow: InfoWindow(title: event.name),
+                          infoWindow: InfoWindow(title: name),
                         );
                       }).toSet(),
                     ),

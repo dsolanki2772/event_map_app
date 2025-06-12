@@ -25,7 +25,15 @@ class EventBloc extends Bloc<EventEvent, EventState> {
 
   void _onToggleFilter(ToggleFilter event, Emitter<EventState> emit) {
     final filtered = event.showUpcoming
-        ? _allEvents.where((e) => e.isUpcoming).toList()
+        ? _allEvents
+              .where(
+                (e) => e is ScheduledEvent
+                    ? e.isUpcoming
+                    : e is CreatedEvent
+                    ? e.isUpcoming
+                    : false,
+              )
+              .toList()
         : _allEvents;
     emit(EventLoaded(filtered));
   }

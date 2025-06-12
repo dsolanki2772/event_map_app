@@ -28,7 +28,16 @@ class EventListSheet extends StatelessWidget {
           itemBuilder: (_, index) {
             final event = events[index];
             final icon = _getEventIcon(index);
-
+            var name = event is ScheduledEvent
+                ? event.name
+                : event is CreatedEvent
+                ? event.name
+                : 'Unknown';
+            var date = event is ScheduledEvent
+                ? 'Time: ${Util.formatDateTime(event.time.toIso8601String())}'
+                : event is CreatedEvent
+                ? 'Created At: ${DateTime.fromMillisecondsSinceEpoch(event.createdAt * 1000)}'
+                : 'Unknown';
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
@@ -47,7 +56,7 @@ class EventListSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          event.name,
+                          name,
                           style: TextStyle(
                             fontSize: 15,
                             color: Colors.white,
@@ -56,7 +65,7 @@ class EventListSheet extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          Util.formatDateTime(event.time),
+                          date,
                           style: TextStyle(fontSize: 12, color: Colors.white70),
                         ),
                       ],
